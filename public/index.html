@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Friends Widget</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1db954, #191414);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+
+        .login-section {
+            text-align: center;
+            margin: 50px 0;
+        }
+
+        .login-btn {
+            background: #1db954;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .login-btn:hover {
+            background: #1ed760;
+            transform: translateY(-2px);
+        }
+
+        .friends-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .friends-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .friend-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .friend-card h3 {
+            margin-bottom: 15px;
+            color: #1db954;
+        }
+
+        .song-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .song-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .song-details h4 {
+            margin-bottom: 5px;
+        }
+
+        .song-details p {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .not-playing {
+            text-align: center;
+            opacity: 0.6;
+            font-style: italic;
+        }
+
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .add-friend-form {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .add-friend-form input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 1rem;
+        }
+
+        .add-friend-form button {
+            width: 100%;
+            background: #1db954;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Spotify Friends</h1>
+            <p>Смотри, что слушают твои друзья</p>
+        </div>
+
+        <!-- Секция входа -->
+        <div class="login-section" id="loginSection">
+            <a href="/login" class="login-btn">Войти через Spotify</a>
+        </div>
+
+        <!-- Секция друзей -->
+        <div class="friends-section" id="friendsSection">
+            <div class="controls">
+                <button class="btn" onclick="loadFriendsActivity()">🔄 Обновить</button>
+                <button class="btn" onclick="toggleAddFriendForm()">➕ Добавить друга</button>
+            </div>
+
+            <div class="add-friend-form" id="addFriendForm" style="display: none;">
+                <h3>Добавить друга</h3>
+                <input type="text" id="friendSpotifyID" placeholder="Spotify ID друга">
+                <button onclick="addFriend()">Добавить</button>
+            </div>
+
+            <div id="friendsActivity">
+                <div class="loading">Загрузка...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Проверяем авторизацию при загрузке страницы
+        window.onload = function() {
+            checkAuth();
+        };
+
+        // Проверка авторизации
+        async function checkAuth() {
+            try {
+                const response = await fetch('/me');
+                if (response.ok) {
+                    // Пользователь авторизован
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('friendsSection').style.display = 'block';
+                    loadFriendsActivity();
+                } else {
+                    // Пользователь не авторизован
+                    document.getElementById('loginSection').style.display = 'block';
+                    document.getElementById('friendsSection').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Ошибка проверки авторизации:', error);
+            }
+        }
+
+        // Загрузка активности друзей
+        async function loadFriendsActivity() {
+            const container = document.getElementById('friendsActivity');
+            container.innerHTML = '<div class="loading">Загрузка...</div>';
+
+            try {
+                const response = await fetch('/widget/friends-activity');
+                const data = await response.json();
+
+                if (data.friends && data.friends.length > 0) {
+                    displayFriendsActivity(data.friends);
+                } else {
+                    container.innerHTML = '<div class="not-playing">У вас пока нет друзей или никто не слушает музыку</div>';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки активности друзей:', error);
+                container.innerHTML = '<div class="error">Ошибка загрузки данных</div>';
+            }
+        }
+
+        // Отображение активности друзей
+        function displayFriendsActivity(friends) {
+            const container = document.getElementById('friendsActivity');
+            
+            const friendsHTML = friends.map(friend => {
+                if (friend.isPlaying && friend.song) {
+                    return `
+                        <div class="friend-card">
+                            <h3>👤 ${friend.spotifyID}</h3>
+                            <div class="song-info">
+                                <img src="${friend.song.image}" alt="Album cover" class="song-image">
+                                <div class="song-details">
+                                    <h4>${friend.song.name}</h4>
+                                    <p>${friend.song.artist}</p>
+                                    <p>${friend.song.album}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="friend-card">
+                            <h3>👤 ${friend.spotifyID}</h3>
+                            <div class="not-playing">Не слушает музыку</div>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            container.innerHTML = `
+                <div class="friends-grid">
+                    ${friendsHTML}
+                </div>
+            `;
+        }
+
+        // Показать/скрыть форму добавления друга
+        function toggleAddFriendForm() {
+            const form = document.getElementById('addFriendForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Добавить друга
+        async function addFriend() {
+            const friendSpotifyID = document.getElementById('friendSpotifyID').value.trim();
+            
+            if (!friendSpotifyID) {
+                alert('Введите Spotify ID друга');
+                return;
+            }
+
+            try {
+                const response = await fetch('/friends/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ friendSpotifyID })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Друг добавлен!');
+                    document.getElementById('friendSpotifyID').value = '';
+                    document.getElementById('addFriendForm').style.display = 'none';
+                    loadFriendsActivity();
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка добавления друга:', error);
+                alert('Ошибка добавления друга');
+            }
+        }
+
+        // Автообновление каждые 30 секунд
+        setInterval(loadFriendsActivity, 30000);
+    </script>
+</body>
+</html>

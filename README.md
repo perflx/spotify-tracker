@@ -1,127 +1,160 @@
 # Spotify Friends Widget
 
-Приложение для просмотра того, что слушают твои друзья в Spotify.
+A full-stack web application that lets users connect their Spotify accounts and see what their friends are currently listening to.
 
-## Быстрый старт
+The project integrates the Spotify Web API with a Node.js/Express backend, MongoDB persistence, and a React frontend.
 
-### 1. Настройка бэкенда
+## Features
 
-1. Создайте файл `.env` в корне проекта:
+* Spotify authentication using OAuth 2.0 Authorization Code flow with PKCE
+* Session-based authentication
+* Access and refresh token handling
+* MongoDB persistence with Mongoose
+* Add and remove friends
+* View friends' current Spotify activity
+* Display currently playing track, artist, album and cover art
+* Automatic activity refresh every 30 seconds
+* React-based frontend with responsive UI
+* REST API built with Express
+
+## Tech Stack
+
+### Backend
+
+* Node.js
+* Express.js
+* MongoDB
+* Mongoose
+* Axios
+* Express Session
+
+### Frontend
+
+* React
+* Axios
+* CSS
+
+### External API
+
+* Spotify Web API
+
+## How It Works
+
+The application uses Spotify's OAuth 2.0 Authorization Code flow with PKCE.
+
+1. The user starts the login process.
+2. The server generates a `state` value and a PKCE `code_verifier`.
+3. The user is redirected to Spotify for authorization.
+4. Spotify redirects the user back to the application with an authorization code.
+5. The server validates the `state` value and exchanges the authorization code for Spotify access and refresh tokens.
+6. The user's Spotify ID and tokens are stored in MongoDB.
+7. The user's Spotify ID is stored in the server-side session.
+8. The backend uses the stored Spotify access token to retrieve the user's current playback and their friends' activity.
+
+## API
+
+### Authentication
+
+| Method | Endpoint    | Description                                  |
+| ------ | ----------- | -------------------------------------------- |
+| GET    | `/login`    | Start Spotify authentication                 |
+| GET    | `/callback` | Handle Spotify OAuth callback                |
+| GET    | `/me`       | Get the authenticated user's Spotify profile |
+
+### Friends
+
+| Method | Endpoint          | Description                |
+| ------ | ----------------- | -------------------------- |
+| GET    | `/friends`        | Get the user's friends     |
+| POST   | `/friends/add`    | Add a friend by Spotify ID |
+| DELETE | `/friends/remove` | Remove a friend            |
+
+### Playback
+
+| Method | Endpoint                   | Description                                   |
+| ------ | -------------------------- | --------------------------------------------- |
+| GET    | `/current-song`            | Get the authenticated user's current playback |
+| GET    | `/widget/friends-activity` | Get current playback information for friends  |
+
+## Running Locally
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/perflx/spotify-tracker.git
+cd spotify-tracker
+```
+
+### 2. Configure the backend
+
+Create a `.env` file in the project root:
+
 ```env
-CLIENT_ID=ваш_spotify_client_id
-CLIENT_SECRET=ваш_spotify_client_secret
+CLIENT_ID=your_spotify_client_id
+CLIENT_SECRET=your_spotify_client_secret
 REDIRECT_URI=http://localhost:3001/callback
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/spotify-app
-SESSION_SECRET=ваш_длинный_случайный_ключ
+MONGODB_URI=your_mongodb_connection_string
+SESSION_SECRET=your_session_secret
 PORT=3001
 ```
 
-2. Установите зависимости:
+Create an application in the Spotify Developer Dashboard and add the following redirect URI:
+
+```text
+http://localhost:3001/callback
+```
+
+### 3. Install backend dependencies
+
 ```bash
 npm install
 ```
 
-3. Запустите сервер:
+### 4. Start the backend
+
 ```bash
 npm start
 ```
 
-### 2. Настройка Spotify App
+The backend runs on:
 
-1. Перейдите на [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Создайте новое приложение
-3. Добавьте Redirect URI: `http://localhost:3001/callback`
-4. Скопируйте Client ID и Client Secret в `.env` файл
+```text
+http://localhost:3001
+```
 
-### 3. Настройка MongoDB
+### 5. Start the React frontend
 
-1. Создайте кластер в [MongoDB Atlas](https://cloud.mongodb.com)
-2. Добавьте ваш IP в Network Access
-3. Скопируйте connection string в `.env` файл
-
-## Фронтенд
-
-### Вариант 1: Простой HTML (уже готов)
-
-Откройте `http://localhost:3001` в браузере
-
-### Вариант 2: React приложение
-
-1. Перейдите в папку React приложения:
 ```bash
 cd react-app
-```
-
-2. Установите зависимости:
-```bash
 npm install
-```
-
-3. Запустите React приложение:
-```bash
 npm start
 ```
 
-React приложение будет доступно на `http://localhost:3000`
+The React development server runs on:
 
-## 📱 API Эндпоинты
+```text
+http://localhost:3000
+```
 
-### Авторизация
-- `GET /login` - Вход через Spotify
-- `GET /callback` - Обработка ответа от Spotify
-- `GET /me` - Информация о пользователе
+## Project Structure
 
-### Друзья
-- `GET /friends` - Список друзей
-- `POST /friends/add` - Добавить друга
-- `DELETE /friends/remove` - Удалить друга
+```text
+spotify-tracker/
+├── server.js              # Express server and REST API
+├── public/                # Static frontend
+├── react-app/             # React frontend
+│   ├── src/
+│   │   ├── App.js
+│   │   ├── App.css
+│   │   └── index.js
+│   └── package.json
+├── package.json
+└── README.md
+```
 
-### Виджет
-- `GET /widget/friends-activity` - Активность друзей
-- `GET /current-song` - Текущая песня пользователя
+## Project Status
 
-## 🛠️ Технологии
+This project is a functional student project / prototype.
 
-### Бэкенд
-- Node.js
-- Express.js
-- MongoDB + Mongoose
-- Spotify Web API
-- OAuth 2.0 + PKCE
-
-### Фронтенд
-- HTML/CSS/JavaScript (простой вариант)
-- React.js (продвинутый вариант)
-
-## 🔒 Безопасность
-
-- OAuth 2.0 с PKCE для безопасной авторизации
-- HttpOnly cookies для защиты от XSS
-- Проверка state параметра для защиты от CSRF
-- Автоматическое обновление истекших токенов
-
-## 📱 Мобильное приложение
-
-Для создания мобильного приложения используйте:
-- **React Native** - для кроссплатформенной разработки
-- **Flutter** - альтернатива React Native
-- **Expo** - упрощенная разработка на React Native
-
-## 🎯 Возможности
-
-- ✅ Авторизация через Spotify
-- ✅ Добавление/удаление друзей
-- ✅ Просмотр активности друзей
-- ✅ Автообновление каждые 30 секунд
-- ✅ Адаптивный дизайн
-- ✅ Обработка ошибок
-
-## 🚀 Планы развития
-
-- [ ] WebSocket для обновлений в реальном времени
-- [ ] История прослушивания
-- [ ] Общие плейлисты
-- [ ] Чат для обсуждения музыки
-- [ ] Уведомления о новых треках
-- [ ] Статистика прослушивания
+It was built as an exploration of full-stack web development and third-party API integration. The current implementation focuses on authentication, persistence, friend management and Spotify playback tracking.
 

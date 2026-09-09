@@ -29,7 +29,7 @@ app.use(session({
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Подключено к MongoDB успешно'))
   .catch(err => {
-    console.error('Ошибка подключения к MongoDB:', err.message);
+    console.error(' Ошибка подключения к MongoDB:', err.message);
     console.error('Проверьте:');
     console.error('1. Правильность MONGODB_URI в .env файле');
     console.error('2. Доступность IP-адреса в MongoDB Atlas Network Access');

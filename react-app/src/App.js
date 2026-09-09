@@ -71,7 +71,7 @@ function App() {
     return (
       <div className="app">
         <div className="header">
-          <h1>🎵 Spotify Friends</h1>
+          <h1>Spotify Friends</h1>
           <p>Смотри, что слушают твои друзья</p>
         </div>
         <div className="login-section">
@@ -84,16 +84,16 @@ function App() {
   return (
     <div className="app">
       <div className="header">
-        <h1>🎵 Spotify Friends</h1>
+        <h1>Spotify Friends</h1>
         <p>Смотри, что слушают твои друзья</p>
       </div>
 
       <div className="controls">
         <button className="btn" onClick={loadFriendsActivity}>
-          🔄 Обновить
+          Обновить
         </button>
         <button className="btn" onClick={() => setShowAddFriend(!showAddFriend)}>
-          ➕ Добавить друга
+          Добавить друга
         </button>
       </div>
 

@@ -20,7 +20,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie: { 
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
         maxAge: 600000, // 10 mins each session
         httpOnly: true
     }
@@ -137,6 +137,7 @@ app.get('/login', async (req, res) => {
 });
 
 app.get('/callback', async (req, res) => {
+    let user;
     const code = req.query.code || null;
     const state = req.query.state || null;
     
@@ -198,7 +199,7 @@ app.get('/callback', async (req, res) => {
         const spotifyID = meResponse.data.id;
 
         // Сохраняем/обновляем данные пользователя в БД
-        const user = await User.findOneAndUpdate(
+        user = await User.findOneAndUpdate(
             { spotifyID: spotifyID },
             {
                 accessToken: access_token,
@@ -217,8 +218,7 @@ app.get('/callback', async (req, res) => {
         delete req.session.codeVerifier;
         delete req.session.state;
 
-        // Перенаправляем пользователя на маршрут /current-song, чтобы он увидел текущий трек
-        res.redirect('/current-song');
+        res.redirect('/')
 
     } catch (error) {
         console.error('Ошибка при обработке обратного вызова:', error.response ? error.response.data : error.message);
@@ -249,6 +249,7 @@ app.get('/callback', async (req, res) => {
 app.get('/me', async (req, res) => {
     // Получаем ID пользователя из сессии
     const spotifyID = req.session.spotifyID;
+    let user;
 
     if (!spotifyID) {
         return res.status(401).send('Пользователь не авторизован.');
@@ -256,7 +257,7 @@ app.get('/me', async (req, res) => {
 
     try {
         // Находим пользователя в БД по его ID
-        const user = await User.findOne({ spotifyID });
+        user = await User.findOne({ spotifyID });
         
         if (!user) {
             return res.status(404).send('Пользователь не найден в базе данных.');
